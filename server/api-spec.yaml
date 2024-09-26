@@ -1,0 +1,82 @@
+openapi: 3.1.0
+info:
+  title: blog-post-api
+  description: blog-post-api
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:8081'
+paths:
+  /auth/login:
+    post:
+      summary: Performs an authorisation request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: the JWT token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: the JWT token
+                  message:
+                    type: string
+                    description: message
+        "403":
+          description: request failed
+          content:
+            application/json:
+              schema:
+                type: object
+                description: the error message
+                properties:
+                  error:
+                    type: string
+                    description: message
+  /auth/register:
+    post:
+      summary: Performs a registration request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Registration request was successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: success
+        "400":
+          description: Failed request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: error message

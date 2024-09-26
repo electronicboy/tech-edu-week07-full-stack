@@ -1,0 +1,78 @@
+import jwt from 'jsonwebtoken';
+
+/**
+ * @namespace User
+ * @property {number} id user ID
+ * @property {string} username username
+ * @property {boolean} admin if the user is an admin
+ * @property {boolean} creator if the user is a creator
+ */
+
+
+/**
+ *
+ * @param {string} value value to test
+ * @param {number} minLength
+ * @param {number} maxLength
+ * @returns {boolean} returns if the value passed in follows the provided constraints
+ */
+export function validate(value, minLength, maxLength) {
+    if (!value) return false;
+    if (!minLength && minLength > value.length) return false;
+    if (!maxLength && maxLength < value.length) return false;
+
+    return true;
+}
+
+
+/**
+ *
+ * @param {IncomingHttpHeaders} headers
+ * @returns {Promise<{userID: number, admin: boolean, creator: boolean}| null>}
+ */
+export function checkAuthHeader(headers) {
+    return new Promise((resolve, reject) => {
+        let authorisation = headers["Authorization"]
+
+        try {
+            if (authorisation) {
+                const token = extractJWT(authHeader.slice(authHeader.indexOf(" ")).trim(), JWT_SECRET)
+                if (token) {
+                    resolve({
+                        userID: token.id,
+                        admin: token.admin,
+                        creator: token.creator
+                    })
+                }
+            }
+        } catch (e) {
+            reject(e);
+        }
+        resolve(null)
+    })
+}
+
+/**
+ *
+ * @param token
+ * @param secret
+ * @returns {User}
+ */
+export function extractJWT(token, secret) {
+    console.log(token);
+    if (token == null) return null;
+    try {
+        if (jwt.verify(token, secret) === false) {
+            return null;
+        }
+    } catch (err) {
+        return null;
+    }
+
+    const decoded = jwt.decode(token, secret)
+    if (typeof decoded === "object") return decoded;
+    if (typeof decoded === "string") return JSON.parse(decoded);
+    if (typeof decoded.payload === "string") return JSON.parse(decoded.payload);
+    console.log("Failed to decode object? ", typeof decoded, decoded);
+    throw Error("Failed to decode JWT");
+}

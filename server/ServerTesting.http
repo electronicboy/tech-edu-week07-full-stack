@@ -1,0 +1,61 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=WebStorm
+
+###
+
+POST http://localhost:8081/auth/register
+Content-Type: application/json
+
+{
+  "username": "shane",
+  "password": "shane123"
+}
+
+
+###
+
+POST http://localhost:8081/auth/login
+Content-Type: application/json
+
+{
+  "username": "shane",
+  "password": "shane123"
+}
+
+###
+POST http://localhost:8081/auth/register
+Content-Type: application/json
+
+{
+  "username": "mark",
+  "password": "mark123"
+}
+
+###
+POST http://localhost:8081/auth/login
+Content-Type: application/json
+
+{
+"username": "mark",
+"password": "mark123"
+}
+###
+
+###
+# shane
+GET http://localhost:8081/posts
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJzaGFuZSIsImFkbWluIjp0cnVlLCJpYXQiOjE3MjczNjE1MzZ9.x9LMMhNya5l4U6eWZsEtGN0F4bDN8GhSSaicNJlpq-o
+#non-admin = Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJzaGFuZSIsImFkbWluIjpudWxsLCJpYXQiOjE3MjczNTkzOTR9.gnpJIKRCTkv-H59Sq5yGpokJ_lMLPYsDDZ9vOjSw9ZY
+
+###
+# mark
+GET http://localhost:8081/posts
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwidXNlcm5hbWUiOiJtYXJrIiwiYWRtaW4iOmZhbHNlLCJpYXQiOjE3MjczNjA5MTF9.-6F6AToAxkFuYQst15CirRUgVMwdi1vStWNmI4Hk56U
+
+###
+DELETE http://localhost:8081/posts/1
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJzaGFuZSIsImFkbWluIjp0cnVlLCJpYXQiOjE3MjczNjE1MzZ9.x9LMMhNya5l4U6eWZsEtGN0F4bDN8GhSSaicNJlpq-o
