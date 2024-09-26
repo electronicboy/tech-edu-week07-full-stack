@@ -25,7 +25,7 @@ app.use(cors())
  *****************************/
 
 app.post("/auth/register", (req, res) => {
-    const {username, email, password} = req.body;
+    const {username, password} = req.body;
     if (!validate(username, 3, 40)) {
         res.status(400).json({error: "Username does not meet the requirements"});
         return;
@@ -92,7 +92,7 @@ app.post("/auth/login", (req, res) => {
 })
 
 app.get("/posts", (req, res) => {
-    const {page, limit, sort} = req.query;
+    //const {page, limit, sort} = req.query;
     let authHeader1 = checkAuthHeader(req.headers);
 
     authHeader1.then(user => {
@@ -103,8 +103,6 @@ app.get("/posts", (req, res) => {
             "SELECT posts.id, posts.title, posts.author, posts.created_at, posts.published_at, post, username FROM blog_posts AS posts INNER JOIN blog_users AS users ON posts.author = users.id")
             .then((results) => {
                 if (results.rowCount === 0) {
-                    const test = {message: "derp"}
-
                     return [];
                 }
 
@@ -167,7 +165,7 @@ app.post("/posts", (req, res) => {
                     })
                 })
 
-                insertionPromise.then((result) => {
+                insertionPromise.then((_) => {
                     res.status(200).json({message: "success"})
                 }).catch((err) => {
                     console.log(err)
@@ -337,14 +335,14 @@ app.post("/posts/:id/comments", (req, res) => {
                     return;
                 }
 
-                return pool.query(/* language=PostgreSQL */ "INSERT INTO blog_posts_comments (author, comment, post_id) VALUES ($1, $2, $3)"
-                    [user.id, comment.post.id])
+                return pool.query(/* language=PostgreSQL */ "INSERT INTO blog_posts_comments (author, comment, post_id) VALUES ($1, $2, $3)", [user.userID, comment, post.id])
             }).then((result) => {
 
             if (result.rowCount === 0) {
                 res.status(404).json({error: "Post not found"})
                 return;
             }
+            res.status(200).json({message: "success"})
         })
     })
 })
