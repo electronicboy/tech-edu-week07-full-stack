@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import {getJWTToken} from "./config.js";
 
 /**
  * @namespace User
@@ -32,11 +33,11 @@ export function validate(value, minLength, maxLength) {
  */
 export function checkAuthHeader(headers) {
     return new Promise((resolve, reject) => {
-        let authorisation = headers["Authorization"]
+        let authorisation = headers["authorization"]
 
         try {
             if (authorisation) {
-                const token = extractJWT(authHeader.slice(authHeader.indexOf(" ")).trim(), JWT_SECRET)
+                const token = extractJWT(authorisation.slice(authorisation.indexOf(" ")).trim(), getJWTToken());
                 if (token) {
                     resolve({
                         userID: token.id,
@@ -59,7 +60,6 @@ export function checkAuthHeader(headers) {
  * @returns {User}
  */
 export function extractJWT(token, secret) {
-    console.log(token);
     if (token == null) return null;
     try {
         if (jwt.verify(token, secret) === false) {

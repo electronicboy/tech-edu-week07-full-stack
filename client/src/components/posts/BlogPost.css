@@ -1,0 +1,7 @@
+.blog-post {
+    padding-bottom: 1.5rem;
+}
+
+.blog-post-byline {
+    color: var(--text-color-secondary);
+}

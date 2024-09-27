@@ -1,35 +1,56 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import Header from "./components/structure/Header.jsx";
+import {useState} from "react";
+import {AuthContext} from "./contexts/AuthorisationContext.js";
+import {Route, Routes} from "react-router-dom";
+import HomePage from "./pages/HomePage.jsx";
+import BlogPage from "./pages/BlogPage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import CreatePostPage from "./pages/CreatePostPage.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    const [auth, setAuth] = useState(() => {
+        let item = localStorage.getItem("auth-token");
+        if (item != null) {
+            return JSON.parse(item)
+        }
+    });
+
+    /**
+     *
+     * @param {object} token
+     */
+    function processLogin(token) {
+        if (token === null) {
+            localStorage.removeItem("auth-token");
+            setAuth(null);
+        } else {
+            localStorage.setItem("auth-token", JSON.stringify(token));
+            setAuth(token);
+        }
+    }
+
+
+    return (
+        <>
+            <AuthContext.Provider value={auth}>
+                <Header/>
+                <div className="body-container">
+                    <Routes>
+                        <Route path={"/"} index={true} element={<HomePage/>}/>
+                        <Route path={"/post/:id"} element={<BlogPage />} />
+                        <Route path={"/create"} element={<CreatePostPage />}/>
+
+                        <Route path={"/login"} element={<LoginPage setAuth={processLogin} />} />
+
+
+                    </Routes>
+                </div>
+            </AuthContext.Provider>
+
+        </>
+    )
 }
 
 export default App

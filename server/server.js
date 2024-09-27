@@ -3,22 +3,48 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import jwt from "jsonwebtoken";
+import morgan from "morgan";
 import pg from "pg";
+import winston from "winston";
 import {checkAuthHeader, validate} from "./utils.js";
+import {getDatabaseString, getJWTToken} from "./config.js";
+
+const logger = winston.createLogger({
+    level: 'debug',
+    format: winston.format.json(),
+    transports: [
+        new winston.transports.Console({
+            format: winston.format.simple(),
+        })
+    ]
+})
 
 
 dotenv.config();
 const PORT = process.env.PORT || 8080;
-const JWT_SECRET = process.env.JWT_SECRET || "defaultdefaultdefault";
 
 const app = express()
 
 const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: getDatabaseString(),
 })
 
 app.use(express.json())
 app.use(cors())
+
+// https://betterstack.com/community/guides/logging/how-to-install-setup-and-use-winston-and-morgan-to-log-node-js-applications/#logging-in-an-express-application-using-winston-and-morgan
+const morganMiddleware = morgan(
+    ':method :url :status :res[content-length] - :response-time ms',
+    {
+        stream: {
+
+            // Configure Morgan to use our custom logger with the http severity
+            write: (message) => logger.http(message.trim()),
+        },
+    }
+);
+
+app.use(morganMiddleware);
 
 /*****************************
  * AUTH
@@ -57,6 +83,8 @@ app.post("/auth/register", (req, res) => {
             console.log(err);
             res.status(500).json({error: "An internal error occurred"})
         })
+    }).catch((err) => {
+        logger.error(err)
     })
 })
 
@@ -64,29 +92,32 @@ app.post("/auth/login", (req, res) => {
     const {username, password} = req.body;
 
     pool.query("SELECT id, username, password, admin, creator FROM blog_users WHERE username = $1", [username]).then((result) => {
+        console.log(result);
         if (result.rowCount === 0) {
-            res.status(403).json({error: "Invalid authentication request"});
             return null;
         } else {
             return result.rows[0]
         }
     }).then(user => {
+        console.log(user);
         if (user) {
             bcrypt.compare(password, user.password, (err, result) => {
                 if (result) {
                     res.status(200).json({
                         message: "success!", token: jwt.sign({
                             id: user.id, username: user.username, admin: user.admin, creator: user.creator
-                        }, JWT_SECRET)
+                        }, getJWTToken())
                     })
                 } else {
-                    res.status(403).json({error: "Invalid authentication request"});
+                    res.status(403).json({error: "Invalid authentication request1"});
                 }
             })
+        } else {
+            res.status(403).json({error: "Invalid authentication request2"});
         }
     }).catch((err) => {
-        res.status(500).json({error: "An internal error occurred"});
         console.log(err)
+        res.status(500).json({error: "An internal error occurred"});
     })
 
 })
@@ -94,6 +125,7 @@ app.post("/auth/login", (req, res) => {
 app.get("/posts", (req, res) => {
     //const {page, limit, sort} = req.query;
     let authHeader1 = checkAuthHeader(req.headers);
+    console.log(1)
 
     authHeader1.then(user => {
         const userID = user != null ? user.userID : null;
@@ -103,9 +135,8 @@ app.get("/posts", (req, res) => {
             "SELECT posts.id, posts.title, posts.author, posts.created_at, posts.published_at, post, username FROM blog_posts AS posts INNER JOIN blog_users AS users ON posts.author = users.id")
             .then((results) => {
                 if (results.rowCount === 0) {
-                    return [];
+                    return null;
                 }
-
                 let posts
                 if (admin) {
                     posts = results.rows
@@ -124,15 +155,63 @@ app.get("/posts", (req, res) => {
                 return posts;
             }).then(posts => {
             if (!posts) {
-                res.status(404).json({message: "No posts found"});
+                res.status(404).json({error: "No posts found"});
+            } else {
+                res.status(200).json(posts);
+            }
+        }).catch((err) => {
+            console.log(5)
+            console.log(err)
+            res.status(500).json({error: "An internal error occurred"});
+        })
+    }).catch((err) => {
+        logger.error(err)
+    })
+})
+
+app.get("/posts/:id", (req, res) => {
+    const {id} = req.params;
+    let authHeader1 = checkAuthHeader(req.headers);
+
+
+    authHeader1.then(user => {
+        const userID = user != null ? user.userID : null;
+        const admin = user != null && user.admin;
+
+        pool.query(/* language=PostgreSQL */
+            "SELECT posts.id, posts.title, posts.author, posts.created_at, posts.published_at, post, username FROM blog_posts AS posts INNER JOIN blog_users AS users ON posts.author = users.id WHERE posts.id = $1", [id])
+            .then((results) => {
+                if (results.rowCount === 0) {
+                    return null;
+                }
+
+                let post = results.rows[0];
+                if (!admin) {
+                    post = {
+                        id: post.id,
+                        title: post.title,
+                        published_at: post.published_at,
+                        post: post.post,
+                        username: post.username,
+                    }
+                }
+
+                return post;
+
+            }).then(posts => {
+            if (!posts) {
+                res.status(404).json({error: "No posts found"});
             } else {
                 res.status(200).json(posts);
             }
         }).catch((err) => {
             console.log(err)
-            res.status(500).json({message: "An internal error occurred"});
+            res.status(500).json({error: "An internal error occurred"});
         })
+    }).catch((err) => {
+        console.log(err)
     })
+
 })
 
 app.post("/posts", (req, res) => {
@@ -179,6 +258,8 @@ app.post("/posts", (req, res) => {
         })
 
 
+    }).catch((err) => {
+        logger.error(err)
     })
 })
 
@@ -220,9 +301,13 @@ app.post("/posts/:id/published", (req, res) => {
             }
 
             res.status(200).json({message: "success"})
+        }).catch((err) => {
+            logger.error(err)
         })
 
 
+    }).catch((err) => {
+        logger.error(err)
     })
 })
 
@@ -269,7 +354,7 @@ app.delete("/posts/:id", (req, res) => {
                 }).catch((err) => {
                     // derp
                     res.status(500).json({error: "An internal error occurred"});
-                    console.log(err)
+                    logger.error(err)
                     return connection.query(/* language=PostgreSQL */ "ROLLBACK TRANSACTION")
                 }).then((_) => {
                     // release
@@ -284,6 +369,7 @@ app.delete("/posts/:id", (req, res) => {
 app.get("/posts/:id/comments", (req, res) => {
     const {id} = req.params;
 
+    logger.info("test")
     checkAuthHeader(req.headers).then(user => {
         pool.query(/* language=PostgreSQL */ "SELECT author, blog_posts.published_at FROM blog_posts WHERE id = $1", [id]).then(result => {
             if (result.rowCount === 0) {
@@ -291,34 +377,40 @@ app.get("/posts/:id/comments", (req, res) => {
                 return;
             }
 
-            const canModify = user.admin || result.rows[0].published_at != null || result.rows[0].author === user.userID;
-            if (!canModify) {
+            const canView = (user != null && user.admin) || result.rows[0].published_at != null || (user != null && result.rows[0].author === user.userID);
+            if (!canView) {
                 res.status(404).json({error: "Post not found"})
                 return null;
             }
 
-            return pool.query(/* language=PostgreSQL */ "INSERT INTO blog_posts_comments (author, comment, post_id) VALUES ($1, $2, $3)", [user.id, comment, post.id])
+            return pool.query(/* language=PostgreSQL */ "SELECT blog_posts_comments.id, author, comment, date, users.username as username FROM blog_posts_comments INNER JOIN blog_users as users ON blog_posts_comments.author = users.id WHERE post_id = $1", [id])
 
         }).then(result => {
-            if (!result || result.rowCount === 0) {
-                return;
+            if (!result) {
+                return
             }
 
-            res.status(200).json({message: "success"})
+            res.status(200).json(result.rows)
+        }).catch((err) => {
+            logger.error(err)
         })
+    }).catch((err) => {
+        logger.error(err)
     })
 })
 
 app.post("/posts/:id/comments", (req, res) => {
     const {comment} = req.body;
+    const {id} = req.params;
 
     checkAuthHeader(req.headers).then(user => {
         if (!user) {
+            logger.debug(`${req.path} - no user `)
             res.status(403).json({error: "Insufficient permissions"})
             return;
         }
 
-        pool.query(/* language=PostgreSQL */ "SELECT author, published_at AS published FROM blog_posts WHERE id = ?", [comment.id])
+        pool.query(/* language=PostgreSQL */ "SELECT id, author, published_at AS published FROM blog_posts WHERE id = $1", [id])
             .then((result) => {
                 if (result.rowCount === 0) {
                     res.status(404).json({error: "Post not found"})
@@ -334,16 +426,35 @@ app.post("/posts/:id/comments", (req, res) => {
                     res.status(404).json({error: "Post not found"})
                     return;
                 }
-
                 return pool.query(/* language=PostgreSQL */ "INSERT INTO blog_posts_comments (author, comment, post_id) VALUES ($1, $2, $3)", [user.userID, comment, post.id])
             }).then((result) => {
+            if (!result) {
+                return;
+            }
 
             if (result.rowCount === 0) {
                 res.status(404).json({error: "Post not found"})
                 return;
             }
             res.status(200).json({message: "success"})
+        }).catch((err) => {
+            logger.error(err)
         })
+    }).catch((err) => {
+        logger.error(err)
+    })
+})
+
+app.get("/tags", (req, res) => {
+    pool.query(/* language=PostgreSQL */ "SELECT id, name FROM blog_tags").then((result) => {
+        return res.status(200).json(result.rows.map(tag => (
+            {
+                id: tag.id,
+                name: tag.name,
+            }
+        )))
+    }).catch((err) => {
+        logger.error(err)
     })
 })
 
