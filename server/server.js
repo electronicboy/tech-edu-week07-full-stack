@@ -5,13 +5,17 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import morgan from "morgan";
 import pg from "pg";
-import winston from "winston";
+import winston, {format} from "winston";
 import {checkAuthHeader, validate} from "./utils.js";
 import {getDatabaseString, getJWTToken} from "./config.js";
 
+// https://stackoverflow.com/questions/51630896/winston-not-displaying-error-details
 const logger = winston.createLogger({
     level: 'debug',
-    format: winston.format.json(),
+    format: format.combine(
+        format.errors({stack: true}),
+        winston.format.json()
+    ),
     transports: [
         new winston.transports.Console({
             format: winston.format.simple(),
@@ -37,7 +41,6 @@ const morganMiddleware = morgan(
     ':method :url :status :res[content-length] - :response-time ms',
     {
         stream: {
-
             // Configure Morgan to use our custom logger with the http severity
             write: (message) => logger.http(message.trim()),
         },
@@ -97,7 +100,6 @@ app.post("/auth/refresh", (req, res) => {
     checkAuthHeader(req.headers).then(user => {
 
         pool.query("SELECT id, username, password, admin, creator FROM blog_users WHERE id = $1", [user.userID]).then((result) => {
-            console.log(result);
             if (result.rowCount === 0) {
                 return null;
             } else {
@@ -114,7 +116,6 @@ app.post("/auth/refresh", (req, res) => {
             }
         }).catch((err) => {
             res.status(403).json({error: "Failed to refresh token"})
-            console.log("aaa", err)
             logger.error(err);
         })
     }).catch((err) => {
@@ -127,14 +128,12 @@ app.post("/auth/login", (req, res) => {
     const {username, password} = req.body;
 
     pool.query("SELECT id, username, password, admin, creator FROM blog_users WHERE username = $1", [username]).then((result) => {
-        console.log(result);
         if (result.rowCount === 0) {
             return null;
         } else {
             return result.rows[0]
         }
     }).then(user => {
-        console.log(user);
         if (user) {
             bcrypt.compare(password, user.password, (err, result) => {
                 if (result) {
@@ -179,7 +178,6 @@ app.get("/posts", (req, res) => {
     }
 
     let authHeader1 = checkAuthHeader(req.headers);
-    console.log(1)
 
     authHeader1.then(user => {
         const userID = user != null ? user.userID : null;
@@ -249,6 +247,7 @@ app.get("/posts", (req, res) => {
                 res.status(200).json(posts);
             }
         }).catch((err) => {
+            logger.e()
             console.log(err)
             res.status(500).json({error: "An internal error occurred"});
         })

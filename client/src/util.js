@@ -1,6 +1,6 @@
 import * as jose from 'jose'
 export function getAPI() {
-    return location.href.includes("localhost") ? "http://localhost:8081" : "/onrender"
+    return location.href.includes("localhost") ? "http://localhost:8081" : "https://tech-edu-week07-full-stack.onrender.com"
 }
 
 /**
