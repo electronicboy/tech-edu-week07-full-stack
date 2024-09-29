@@ -27,7 +27,8 @@ function App() {
         async function refreshTokenIfNeeded() {
 
             const extractedToken = getTokenProps(auth.token);
-            if (extractedToken.exp > Math.floor(Date() / 1000)) {
+            console.log(extractedToken.exp);
+            if (extractedToken.exp > Math.floor(new Date() / 1000)) {
                 const headers = {};
                 if (auth.token) {
                     headers["Authorization"] = `Bearer ${auth.token}`;

@@ -58,7 +58,7 @@ export default function HomePage() {
             {
                 errorMessage ? <div>Error: {errorMessage}</div> : null
             }
-            {/*{blogPosts && <button onClick={() => toggleSortMode()}>Toggle Sort Mode</button>}*/}
+            {blogPosts && <button onClick={() => toggleSortMode()}>Toggle Sort Mode</button>}
             {
                 blogPosts != null ?
                     (blogPosts.length !== 0 ?
