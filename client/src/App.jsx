@@ -27,7 +27,6 @@ function App() {
         async function refreshTokenIfNeeded() {
 
             const extractedToken = getTokenProps(auth.token);
-            console.log(extractedToken.exp);
             if (extractedToken.exp < Math.floor(new Date() / 1000)) {
                 const headers = {};
                 if (auth.token) {

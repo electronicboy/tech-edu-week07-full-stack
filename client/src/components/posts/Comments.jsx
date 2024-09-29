@@ -11,9 +11,12 @@ export default function Comments({id, comments, refreshComments}) {
     console.log(comments);
 
     function canDelete(comment) {
+        console.dir(auth)
+        console.dir(comment)
         if (auth) {
             let tokenProps = getTokenProps(auth.token);
-            return tokenProps.admin || comment.author == tokenProps.userID
+            console.dir(tokenProps)
+            return tokenProps.admin || comment.author === tokenProps.id
 
         }
     }
