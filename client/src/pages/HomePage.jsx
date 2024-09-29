@@ -8,14 +8,19 @@ export default function HomePage() {
     const [tags, setTags] = useState([])
     const [knownTags, setKnownTags] = useState()
     const [errorMessage, setErrorMessage] = useState()
+    const [sortMode, setSortMode] = useState("asc")
     const auth = useContext(AuthContext);
+
+    function toggleSortMode() {
+        setSortMode(curr => curr === "asc" ? "desc" : "asc")
+    }
 
     useEffect(() => {
         const headers = {};
         if (auth) {
             headers["Authorization"] = `Bearer ${auth.token}`;
         }
-        fetch(getAPI() + "/posts?sort=desc", {
+        fetch(getAPI() + `/posts?sort=${sortMode}`, {
             headers: {
                 ...headers,
                 "Accept": "application/json",
@@ -32,7 +37,7 @@ export default function HomePage() {
             return fetch(getAPI() + "/tags", {})
         }).then(res => res.json()).then(data => {setTags(data)});
 
-    }, [])
+    }, [sortMode])
 
     useEffect(() => {
         fetch(getAPI() + `/tags`, {}).then(res => {
@@ -49,6 +54,7 @@ export default function HomePage() {
             {
                 errorMessage ? <div>Error: {errorMessage}</div> : null
             }
+            {blogPosts && <button onClick={() => toggleSortMode()}>Toggle Sort Mode</button>}
             {
                 blogPosts && blogPosts.map(post => {
                     return (<BlogPost key={post.id} {...post} knownTags={knownTags} preview={true}/>)

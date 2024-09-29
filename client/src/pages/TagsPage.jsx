@@ -7,7 +7,7 @@ export default function TagsPage() {
     useEffect(() => {
         fetch(getAPI() + "/tags", {}).then(res => res.json()).then(data => setTags(data));
     }, [])
-console.log(tags)
+
     return (
         <ui>
             {tags && tags.map(tag => (<li key={tag.id}>{tag.name}</li>))}

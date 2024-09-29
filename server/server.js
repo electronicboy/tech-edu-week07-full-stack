@@ -164,9 +164,9 @@ app.get("/posts", (req, res) => {
     const {sort} = req.query;
 
     let sortQueryInsert = null;
-    if (!sort || sort === "desc") {
+    if (!sort || sort.toLowerCase() === "desc") {
         sortQueryInsert = " ORDER BY created_at DESC";
-    } else if (sort === "asc") {
+    } else if (sort.toLowerCase() === "asc") {
         sortQueryInsert = " ORDER BY created_at ASC";
     }
 

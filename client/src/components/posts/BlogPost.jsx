@@ -34,8 +34,17 @@ export default function BlogPost({id, title, published_at, post, username, previ
                 <h2 style={{display: "inline"}}>{title}</h2> {!preview && knownTags && tags && populateTags()}
             </div>
             {/* <Link to={"/users/" +username} onClick={e => e.stopPropagation()}>{username}</Link> */}
-            <span className={"blog-post-byline"}>Published by <span
-                className={"blog-post-author"}>{username}</span> @ {formatDate(new Date(published_at))}</span>
+            {
+                published_at ? (
+                        <span className={"blog-post-byline"}>Published by <span
+                            className={"blog-post-author"}>{username}</span> @ {formatDate(new Date(published_at))}</span>
+                ) :
+                    (
+                        <span className={"blog-post-byline"}>by <span
+                            className={"blog-post-author"}>{username}</span></span>
+                    )
+            }
+
             <br/>
             <span style={{whiteSpace: "pre-wrap"}}>{post}</span>
         </div>)
