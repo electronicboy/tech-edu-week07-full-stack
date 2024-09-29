@@ -1,0 +1,68 @@
+.form-holder {
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: var(--background-color-secondary);
+    box-shadow: 1px 1px 1px var(--background-color-shadow);
+}
+
+.form-group {
+    font-size: 1.2rem;
+    font-family: "Ubuntu", sans-serif;
+    padding: 0.3rem 0;
+}
+
+.form-group-input input {
+    padding: 0.3rem;
+}
+
+.form-holder > form {
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 2rem 2rem;
+}
+
+.form-header-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    text-align: center;
+    min-height: 2.5rem;
+    border-bottom: 1px solid var(--background-color-shadow);
+}
+
+.form-header-selector > * {
+    border-left: 1px solid var(--background-color-shadow);
+}
+.form-header-selector :first-child {
+    border-left: none;
+}
+
+.form-header-selector > .active {
+    font-weight: bold;
+}
+.form-group > * {
+    margin-top: 0.5rem;
+}
+
+.form-group-submit {
+    text-align: center;
+}
+.form-group-submit button {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--background-color-shadow);
+}
+.form-group-submit button.primary {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+}
+
+.form-error {
+    background-color: var(--error-color);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    text-align: center;
+    padding: 0.5rem;
+}

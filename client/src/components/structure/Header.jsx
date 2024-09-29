@@ -8,6 +8,9 @@ import {getTokenProps} from "../../util.js";
 export default function Header() {
     const auth = useContext(AuthContext);
     const hasToken = auth != null && auth.token;
+    const tokenData = hasToken && getTokenProps(auth.token)
+    console.log(tokenData)
+    const canCreatePosts = tokenData && (tokenData.admin || tokenData.creator)
     console.log("auth", auth)
 
     return (<header>
@@ -15,14 +18,18 @@ export default function Header() {
         <nav>
             <div role={"navigation"}>
                 <Link to={"/"}>Home</Link>
-                <Link to={"/categories"}>Categories</Link>
-                <Link to={"/categories"}>Users</Link>
+                <Link to={"/tags"}>tags</Link>
 
             </div>
             <div role={"navigation"} className={"nav-right"}>
                 {
                     hasToken ?
-                        <Link to={"/logout"} className={"left"}>Hey, {getTokenProps(auth.token).username}</Link>
+                        (<>
+                        <Link to={"/logout"}>Hey, {getTokenProps(auth.token).username}</Link>
+
+                            {canCreatePosts && <Link to={"/create"}>Create a post</Link>}
+                            </>
+                        )
                         :
                         <>
                             <Link to={"/login"} className={"left"}>Login</Link>

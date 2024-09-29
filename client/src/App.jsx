@@ -7,6 +7,7 @@ import HomePage from "./pages/HomePage.jsx";
 import BlogPage from "./pages/BlogPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import CreatePostPage from "./pages/CreatePostPage.jsx";
+import LogoutPage from "./pages/LogoutPage.jsx";
 
 function App() {
 
@@ -43,6 +44,7 @@ function App() {
                         <Route path={"/create"} element={<CreatePostPage />}/>
 
                         <Route path={"/login"} element={<LoginPage setAuth={processLogin} />} />
+                        <Route path={"/logout"} element={<LogoutPage setAuth={processLogin} />} />
 
 
                     </Routes>

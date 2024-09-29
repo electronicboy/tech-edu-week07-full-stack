@@ -69,22 +69,26 @@ app.post("/auth/register", (req, res) => {
             return;
         }
 
-        pool.query("INSERT INTO blog_users (username, password) VALUES ($1, $2) RETURNING id, username", [username, hash]).then((result) => {
+        pool.query("INSERT INTO blog_users (username, password) VALUES ($1, $2) RETURNING id, username, admin, creator", [username, hash]).then((result) => {
             if (result.rowCount > 0) {
-                res.status(200).json({message: "success!"})
+                let user = result.rows[0];
+                res.status(200).json({
+                    message: "success!", token: jwt.sign({
+                        id: user.id, username: user.username, admin: user.admin, creator: user.creator
+                    }, getJWTToken())
+                })
+                return;
             }
-            console.log(result);
+            throw new Error("The server entered an unexpected state")
         }).catch((err) => {
             if (err.code === "23505") {
                 res.status(500).json({error: "This name is already in use"})
                 return;
             }
 
-            console.log(err);
+            logger.error(err);
             res.status(500).json({error: "An internal error occurred"})
         })
-    }).catch((err) => {
-        logger.error(err)
     })
 })
 
@@ -109,47 +113,86 @@ app.post("/auth/login", (req, res) => {
                         }, getJWTToken())
                     })
                 } else {
-                    res.status(403).json({error: "Invalid authentication request1"});
+                    res.status(403).json({error: "Invalid authentication request"});
                 }
             })
         } else {
-            res.status(403).json({error: "Invalid authentication request2"});
+            res.status(403).json({error: "Invalid authentication request"});
         }
     }).catch((err) => {
-        console.log(err)
+        logger.error(err);
         res.status(500).json({error: "An internal error occurred"});
     })
 
 })
 
 app.get("/posts", (req, res) => {
-    //const {page, limit, sort} = req.query;
+    //const {page, limit} = req.query;
+    const {sort} = req.query;
+
+    let sortQueryInsert = null;
+    if (!sort || sort === "desc") {
+        sortQueryInsert = " ORDER BY created_at DESC";
+    } else if (sort === "asc") {
+        sortQueryInsert = " ORDER BY created_at ASC";
+    }
+
     let authHeader1 = checkAuthHeader(req.headers);
     console.log(1)
 
     authHeader1.then(user => {
         const userID = user != null ? user.userID : null;
+        console.log(user);
         const admin = user != null && user.admin;
 
+        console.log("admin", admin);
         pool.query(/* language=PostgreSQL */
-            "SELECT posts.id, posts.title, posts.author, posts.created_at, posts.published_at, post, username FROM blog_posts AS posts INNER JOIN blog_users AS users ON posts.author = users.id")
+            `SELECT posts.id,
+                    posts.title,
+                    posts.author,
+                    posts.created_at,
+                    posts.published_at,
+                    post,
+                    users.username,
+                    coalesce(array_agg(tags.blog_tag), '{}') AS tags
+             FROM blog_posts AS posts
+                      INNER JOIN blog_users AS users ON posts.author = users.id
+                      LEFT JOIN blog_posts_tags AS tags ON tags.blog_post = posts.id
+             GROUP BY posts.id, users.username, posts.title, posts.author, posts.created_at, posts.published_at, post,
+                      posts.id${sortQueryInsert ? sortQueryInsert : ""}`)
             .then((results) => {
                 if (results.rowCount === 0) {
                     return null;
                 }
                 let posts
                 if (admin) {
-                    posts = results.rows
+                    posts = results.rows.map(post => {
+                        if (post.tags && post.tags[0] === null) {
+                            return {
+                                ...post,
+                                tags: null
+                            }
+                        }
+                        return post;
+
+                    })
                 } else {
                     posts = results.rows.filter((post) => {
                         return post.published_at != null || post.author === userID
-                    }).map((post) => ({
-                        id: post.id,
-                        title: post.title,
-                        published_at: post.published_at,
-                        post: post.post,
-                        username: post.username,
-                    }));
+                    }).map((post) => {
+                        const ret = {
+                            id: post.id,
+                            title: post.title,
+                            published_at: post.published_at,
+                            post: post.post,
+                            username: post.username,
+                        }
+                        if (post.tags.length > 0 && post.tags[0]) {
+                            ret.tags = post.tags;
+                        }
+                        return ret;
+
+                    });
                 }
 
                 return posts;
@@ -160,7 +203,6 @@ app.get("/posts", (req, res) => {
                 res.status(200).json(posts);
             }
         }).catch((err) => {
-            console.log(5)
             console.log(err)
             res.status(500).json({error: "An internal error occurred"});
         })
@@ -179,22 +221,45 @@ app.get("/posts/:id", (req, res) => {
         const admin = user != null && user.admin;
 
         pool.query(/* language=PostgreSQL */
-            "SELECT posts.id, posts.title, posts.author, posts.created_at, posts.published_at, post, username FROM blog_posts AS posts INNER JOIN blog_users AS users ON posts.author = users.id WHERE posts.id = $1", [id])
+            `SELECT posts.id,
+                    posts.title,
+                    posts.author,
+                    posts.created_at,
+                    posts.published_at,
+                    post,
+                    users.username,
+                    coalesce(array_agg(tags.blog_tag), '{}') AS tags
+             FROM blog_posts AS posts
+                      INNER JOIN blog_users AS users ON posts.author = users.id
+                      LEFT JOIN blog_posts_tags AS tags
+                                ON tags.blog_post = posts.id
+             WHERE posts.id = $1
+             GROUP BY posts.id, users.username, posts.title, posts.author, posts.created_at, posts.published_at, post,
+                      posts.id`, [id])
             .then((results) => {
                 if (results.rowCount === 0) {
                     return null;
                 }
 
-                let post = results.rows[0];
+                let sourcePost = results.rows[0];
+                let post = {}
+                console.log(sourcePost);
                 if (!admin) {
+                    post = {...sourcePost}
+                } else {
                     post = {
-                        id: post.id,
-                        title: post.title,
-                        published_at: post.published_at,
-                        post: post.post,
-                        username: post.username,
+                        id: sourcePost.id,
+                        title: sourcePost.title,
+                        published_at: sourcePost.published_at,
+                        post: sourcePost.post,
+                        username: sourcePost.username,
                     }
                 }
+
+                if (post.tags.length > 0 && sourcePost.tags[0] === null) {
+                    post.tags = null;
+                }
+
 
                 return post;
 
@@ -220,13 +285,13 @@ app.post("/posts", (req, res) => {
     checkAuthHeader(req.headers).then(user => {
         const canPost = user != null && (user.creator || user.admin);
         if (!canPost) {
-            res.status(403).json({error: "Insufficent permissions"})
+            res.status(403).json({error: "Insufficient permissions"})
             return;
         }
 
         pool.connect().then(connection => {
             connection.query(/* language=PostgreSQL */ "BEGIN TRANSACTION").then(_ => {
-                let insertionPromise = connection.query(/* language=PostgreSQL */
+                connection.query(/* language=PostgreSQL */
                     `INSERT INTO blog_posts (title, post, author, published_at)
                      VALUES ($1, $2, $3,
                              ${publish ? "now()" : "NULL"})
@@ -236,15 +301,21 @@ app.post("/posts", (req, res) => {
                     }
                     return result.rows[0]
 
-                });
+                }).then(({id}) => {
 
-                tags.forEach(/** {number} */tag => {
-                    insertionPromise.then((result) => {
-                        insertionPromise = connection.query(/* language=PostgreSQL */ "INSERT INTO blog_posts_tags (blog_post, blog_tag) VALUES ($1, $2)", [result.id, tag])
-                    })
-                })
+                    async function insertTags() {
+                        for (let i = 0; i < tags.length; i++) {
+                            const tag = tags[i];
+                            await connection.query(/* language=PostgreSQL */ "INSERT INTO blog_posts_tags (blog_post, blog_tag) VALUES ($1, $2) RETURNING (blog_post, blog_tag)", [id, tag]).then(result => {
+                                console.log(result)
+                            })
+                        }
+                    }
 
-                insertionPromise.then((_) => {
+                    return insertTags()
+                }).then(_ => {
+                    return connection.query("COMMIT TRANSACTION")
+                }).then((_) => {
                     res.status(200).json({message: "success"})
                 }).catch((err) => {
                     console.log(err)

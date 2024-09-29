@@ -1,12 +1,25 @@
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {getAPI} from "../util.js";
 import BlogPost from "../components/posts/BlogPost.jsx";
+import {AuthContext} from "../contexts/AuthorisationContext.js";
 
 export default function HomePage() {
     const [blogPosts, setBlogPosts] = useState([])
+    const [tags, setTags] = useState([])
     const [errorMessage, setErrorMessage] = useState()
+    const auth = useContext(AuthContext);
+
     useEffect(() => {
-        fetch(getAPI() + "/posts").then((res) => {
+        const headers = {};
+        if (auth) {
+            headers["Authorization"] = `Bearer ${auth.token}`;
+        }
+        fetch(getAPI() + "/posts?sort=desc", {
+            headers: {
+                ...headers,
+                "Accept": "application/json",
+            }
+        }).then((res) => {
             if (res.status === 200) {
                 res.json().then((posts) => {setBlogPosts(posts)});
             } else {
@@ -14,11 +27,13 @@ export default function HomePage() {
             }
         }).catch((error) => {
             setErrorMessage(error.message);
-        })
+        }).then(_ => {
+            return fetch(getAPI() + "/tags", {})
+        }).then(res => res.json()).then(data => {setTags(data)});
 
     }, [])
 
-    console.log(blogPosts)
+    console.log(blogPosts, tags)
     return (
         <>
             {
@@ -26,7 +41,7 @@ export default function HomePage() {
             }
             {
                 blogPosts && blogPosts.map(post => {
-                    return (<BlogPost key={post.id} {...post} preview={true}/>)
+                    return (<BlogPost key={post.id} {...post} knownTags={tags} preview={true}/>)
                 })
             }
 
