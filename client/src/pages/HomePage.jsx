@@ -2,6 +2,7 @@ import {useContext, useEffect, useState} from "react";
 import {getAPI} from "../util.js";
 import BlogPost from "../components/posts/BlogPost.jsx";
 import {AuthContext} from "../contexts/AuthorisationContext.js";
+import {useSearchParams} from "react-router-dom";
 
 export default function HomePage() {
     const [blogPosts, setBlogPosts] = useState([])
@@ -9,6 +10,7 @@ export default function HomePage() {
     const [knownTags, setKnownTags] = useState()
     const [errorMessage, setErrorMessage] = useState()
     const [sortMode, setSortMode] = useState("asc")
+    const [searchParams, setSearchParams] = useSearchParams()
     const auth = useContext(AuthContext);
 
     function toggleSortMode() {
@@ -20,7 +22,7 @@ export default function HomePage() {
         if (auth) {
             headers["Authorization"] = `Bearer ${auth.token}`;
         }
-        fetch(getAPI() + `/posts?sort=${sortMode}`, {
+        fetch(getAPI() + `/posts?sort=${sortMode}&tag=${searchParams.get("tag") ? searchParams.get("tag") : ""}`, {
             headers: {
                 ...headers,
                 "Accept": "application/json",
@@ -37,7 +39,7 @@ export default function HomePage() {
             return fetch(getAPI() + "/tags", {})
         }).then(res => res.json()).then(data => {setTags(data)});
 
-    }, [sortMode])
+    }, [sortMode, searchParams])
 
     useEffect(() => {
         fetch(getAPI() + `/tags`, {}).then(res => {
@@ -54,7 +56,7 @@ export default function HomePage() {
             {
                 errorMessage ? <div>Error: {errorMessage}</div> : null
             }
-            {blogPosts && <button onClick={() => toggleSortMode()}>Toggle Sort Mode</button>}
+            {/*{blogPosts && <button onClick={() => toggleSortMode()}>Toggle Sort Mode</button>}*/}
             {
                 blogPosts && blogPosts.map(post => {
                     return (<BlogPost key={post.id} {...post} knownTags={knownTags} preview={true}/>)

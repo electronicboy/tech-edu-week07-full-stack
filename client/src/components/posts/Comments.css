@@ -1,0 +1,17 @@
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    border-bottom: 1px solid var(--background-color-shadow);
+    padding: 0.4rem 0.2rem;
+}
+
+.comment-body {
+    margin-top: 0.3rem;
+}
+
+.comment {
+    border: 1px solid var(--background-color-shadow);
+    padding: 0.4rem 0.2rem;
+    margin-top: 1rem;
+}

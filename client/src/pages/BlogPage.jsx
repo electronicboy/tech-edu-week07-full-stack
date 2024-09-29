@@ -13,6 +13,30 @@ export default function BlogPage() {
     const [fetchError, setFetchError] = useState();
     const [knownTags, setKnownTags] = useState();
 
+    function updateComments() {
+        const headers = {}
+        if (auth) {
+            headers["Authorization"] = `Bearer ${auth.token}`;
+        }
+        return fetch(getAPI() + `/posts/${id}/comments`, {
+            headers: {
+                ...headers,
+                "Accept": "application/json",
+            }
+        }).then(res => {
+            if (!res) {
+                return;
+            }
+            res.json().then(comments => {
+                console.log(comments)
+                if (res.status === 200) {
+                    setComments(comments)
+                } else {
+                    setFetchError(comments.error)
+                }
+            })
+        })
+    }
 
     useEffect(() => {
         const headers = {}
@@ -37,24 +61,7 @@ export default function BlogPage() {
         }).then(success => {
             console.log(success)
             if (!success) return null;
-            return fetch(getAPI() + `/posts/${id}/comments`, {
-                headers: {
-                    ...headers,
-                    "Accept": "application/json",
-                }
-            })
-        }).then(res => {
-            if (!res) {
-                return;
-            }
-            res.json().then(comments => {
-                console.log(comments)
-                if (res.status === 200) {
-                    setComments(comments)
-                } else {
-                    setFetchError(comments.error)
-                }
-            })
+            return updateComments()
         })
     }, [])
 
@@ -66,12 +73,12 @@ export default function BlogPage() {
                 })
             }
         })
-    },[])
+    }, [])
 
 
     return (<>
         {fetchError && <div><h3>{fetchError}</h3></div>}
-        {post && <BlogPost  {...post} knownTags={knownTags} />}
-        {post && <Comments comments={comments} id={id} />}
+        {post && <BlogPost  {...post} knownTags={knownTags}/>}
+        {post && <Comments comments={comments} id={id} refreshComments={() => updateComments()}/>}
     </>)
 }

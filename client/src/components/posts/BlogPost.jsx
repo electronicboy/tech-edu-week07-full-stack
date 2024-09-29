@@ -19,7 +19,7 @@ export default function BlogPost({id, title, published_at, post, username, previ
         return tags.map(tag => {
             const found = knownTags.find((test) => test.id === tag);
             if (found) {
-                return (<span  key={tag.id} className={"blog-post-tag"}>{found.name}</span>)
+                return (<span key={tag.id} className={"blog-post-tag"}>{found.name}</span>)
             } else {
                 return (<></>)
             }
@@ -32,18 +32,20 @@ export default function BlogPost({id, title, published_at, post, username, previ
              onClick={(e) => onBlogPostClick(e)}>
             <div className={"blog-post-header"}>
                 <h2 style={{display: "inline"}}>{title}</h2> {!preview && knownTags && tags && populateTags()}
+
+                <div>
+                    {/* <Link to={"/users/" +username} onClick={e => e.stopPropagation()}>{username}</Link> */}
+                    {
+                        published_at ? (
+                                <span className={"blog-post-byline"}>Published by <span
+                                    className={"blog-post-author"}>{username}</span> @ {formatDate(new Date(published_at))}</span>
+                            ) :
+                            (
+                                <span className={"blog-post-byline"}>by <span className={"blog-post-author"}>{username}</span></span>
+                            )
+                    }
+                </div>
             </div>
-            {/* <Link to={"/users/" +username} onClick={e => e.stopPropagation()}>{username}</Link> */}
-            {
-                published_at ? (
-                        <span className={"blog-post-byline"}>Published by <span
-                            className={"blog-post-author"}>{username}</span> @ {formatDate(new Date(published_at))}</span>
-                ) :
-                    (
-                        <span className={"blog-post-byline"}>by <span
-                            className={"blog-post-author"}>{username}</span></span>
-                    )
-            }
 
             <br/>
             <span style={{whiteSpace: "pre-wrap"}}>{post}</span>

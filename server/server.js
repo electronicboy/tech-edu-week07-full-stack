@@ -8,10 +8,9 @@ import pg from "pg";
 import winston from "winston";
 import {checkAuthHeader, validate} from "./utils.js";
 import {getDatabaseString, getJWTToken} from "./config.js";
-import e from "express";
 
 const logger = winston.createLogger({
-    level: 'all',
+    level: 'debug',
     format: winston.format.json(),
     transports: [
         new winston.transports.Console({
@@ -161,7 +160,16 @@ app.post("/auth/login", (req, res) => {
 
 app.get("/posts", (req, res) => {
     //const {page, limit} = req.query;
-    const {sort} = req.query;
+    const {sort, tag} = req.query;
+    let parsedTag;
+    if (tag) {
+        try {
+            parsedTag = JSON.parse(tag);
+        } catch (err) {
+            res.status(400).json({error: "invalid tag value"})
+            return;
+        }
+    }
 
     let sortQueryInsert = null;
     if (!sort || sort.toLowerCase() === "desc") {
@@ -175,10 +183,8 @@ app.get("/posts", (req, res) => {
 
     authHeader1.then(user => {
         const userID = user != null ? user.userID : null;
-        console.log(user);
         const admin = user != null && user.admin;
 
-        console.log("admin", admin);
         pool.query(/* language=PostgreSQL */
             `SELECT posts.id,
                     posts.title,
@@ -197,9 +203,16 @@ app.get("/posts", (req, res) => {
                 if (results.rowCount === 0) {
                     return null;
                 }
-                let posts
+                let posts = results.rows;
+                logger.info(JSON.stringify(posts));
+                logger.info(JSON.stringify(parsedTag));
+                if (parsedTag) {
+                    posts = posts.filter(post => post.tags && post.tags.includes(parsedTag));
+                    logger.info(JSON.stringify(posts));
+                }
+
                 if (admin) {
-                    posts = results.rows.map(post => {
+                    posts = posts.map(post => {
                         if (post.tags && post.tags[0] === null) {
                             return {
                                 ...post,
@@ -210,7 +223,7 @@ app.get("/posts", (req, res) => {
 
                     })
                 } else {
-                    posts = results.rows.filter((post) => {
+                    posts = posts.filter((post) => {
                         return post.published_at != null || post.author === userID
                     }).map((post) => {
                         const ret = {
@@ -566,6 +579,53 @@ app.post("/posts/:id/comments", (req, res) => {
         })
     }).catch((err) => {
         logger.error(err)
+    })
+})
+
+app.delete("/posts/:id/comments/:commentId", (req, res) => {
+    const {id, commentId} = req.params;
+
+    checkAuthHeader(req.headers).then(user => {
+        if (!user) {
+            res.status(403).json({error: "Insufficient permissions"})
+            return;
+        }
+
+        pool.query( /* language=PostgreSQL */ "SELECT bpc.author AS author FROM blog_posts INNER JOIN public.blog_posts_comments bpc on blog_posts.id = bpc.post_id WHERE blog_posts.id = $1 AND bpc.id = $2 ", [id, commentId]).then(result => {
+            if (result.rowCount === 0) {
+                res.status(404).json({error: "Post not found"})
+                return;
+            }
+            return result.rows[0]
+        }).then(post => {
+            const canDelete = user.admin || user.userID === post.author
+
+            if (!canDelete) {
+                // spoofing...
+                res.status(404).json({error: "Post not found"})
+                return;
+            }
+
+            return pool.query( /* language=PostgreSQL */ "DELETE FROM blog_posts_comments WHERE id = $1", [commentId])
+        }).then(post => {
+            if (post) {
+                if (post.rowCount > 0) {
+                    res.status(200).json({message: "Comment deleted"})
+                    return;
+                } else {
+                    // weird state
+                    if (!res.headersSent) {
+                        res.status(500).json({error: "Internal Server Error"})
+                    }
+                }
+            }
+        })
+
+
+
+    }).catch((err) => {
+        logger.error(err)
+        res.status(500).json({error: "Internal Server Error"})
     })
 })
 

@@ -1,9 +1,49 @@
 import './Comments.css'
 import CommentForm from "./CommentForm.jsx";
+import {formatDate, getAPI, getTokenProps} from "../../util.js";
+import {useContext} from "react";
+import {AuthContext} from "../../contexts/AuthorisationContext.js";
 
-export default function Comments({id, comments}) {
+export default function Comments({id, comments, refreshComments}) {
+
+    const auth = useContext(AuthContext);
 
     console.log(comments);
+
+    function canDelete(comment) {
+        if (auth) {
+            let tokenProps = getTokenProps(auth.token);
+            return tokenProps.admin || comment.author == tokenProps.userID
+
+        }
+    }
+
+    function deleteComment(comment) {
+        const headers = {}
+        if (auth.token) {
+            headers["Authorization"] = `Bearer ${auth.token}`;
+        }
+        fetch(getAPI() + `/posts/${id}/comments/${comment.id}`, {
+            method: "DELETE",
+            headers: {
+                ...headers,
+                "Accept": "application/json"
+            }
+        }).then(res => {
+            res.json().then(parsed => {
+                if (res.status === 200) {
+                    refreshComments()
+                }
+            })
+        })
+
+    }
+
+    function genDelete(comment) {
+        return (<button onClick={() => deleteComment(comment)}>␡</button>)
+
+
+    }
 
     function processCommments() {
         if (comments == null) {
@@ -15,8 +55,12 @@ export default function Comments({id, comments}) {
 
         return comments.map((comment, i) => (
             <div className="comment" key={i}>
-                <span>{comment.username}</span>
-                <span>{comment.comment}</span>
+                <div className={"comment-header"}>
+                    <span>@{comment.username}</span> <span>{canDelete(comment) ? genDelete(comment) : ""}{formatDate(new Date(comment.date))}</span>
+                </div>
+                <div className={"comment-body"}>
+                    <span>{comment.comment}</span>
+                </div>
             </div>
         ))
     }
