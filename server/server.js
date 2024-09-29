@@ -8,6 +8,7 @@ import pg from "pg";
 import winston from "winston";
 import {checkAuthHeader, validate} from "./utils.js";
 import {getDatabaseString, getJWTToken} from "./config.js";
+import e from "express";
 
 const logger = winston.createLogger({
     level: 'all',
@@ -313,7 +314,16 @@ app.get("/posts/:id", (req, res) => {
 })
 
 app.post("/posts", (req, res) => {
-    const {title, post, publish, tags} = req.body;
+    const {title, post, publish, tags, extraTags} = req.body;
+    console.log(req.body)
+    if (!title) {
+        res.status(400).json({error: "Missing title"});
+        return;
+    }
+    if (!post) {
+        res.status(400).json({error: "Missing post"});
+        return;
+    }
 
     checkAuthHeader(req.headers).then(user => {
         const canPost = user != null && (user.creator || user.admin);
@@ -321,6 +331,7 @@ app.post("/posts", (req, res) => {
             res.status(403).json({error: "Insufficient permissions"})
             return;
         }
+        let newPostId = -1;
 
         pool.connect().then(connection => {
             connection.query(/* language=PostgreSQL */ "BEGIN TRANSACTION").then(_ => {
@@ -335,8 +346,17 @@ app.post("/posts", (req, res) => {
                     return result.rows[0]
 
                 }).then(({id}) => {
+                    newPostId = id;
 
                     async function insertTags() {
+                        for (let i = 0; i < extraTags.length; i++) {
+                            const extraTag = extraTags[i]
+                            const res = await connection.query(/* language=PostgreSQL */ "INSERT INTO blog_tags (name) VALUES ($1) ON CONFLICT DO NOTHING RETURNING id", [extraTag])
+                            if (res.rowCount === 1) {
+                                tags.push(res.rows[0].id)
+                            }
+                        }
+
                         for (let i = 0; i < tags.length; i++) {
                             const tag = tags[i];
                             await connection.query(/* language=PostgreSQL */ "INSERT INTO blog_posts_tags (blog_post, blog_tag) VALUES ($1, $2) RETURNING (blog_post, blog_tag)", [id, tag]).then(result => {
@@ -349,7 +369,7 @@ app.post("/posts", (req, res) => {
                 }).then(_ => {
                     return connection.query("COMMIT TRANSACTION")
                 }).then((_) => {
-                    res.status(200).json({message: "success"})
+                    res.status(200).json({message: "success", id: newPostId})
                 }).catch((err) => {
                     console.log(err)
                     res.status(500).json({error: "An internal error occurred"})

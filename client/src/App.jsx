@@ -9,6 +9,7 @@ import LoginPage from "./pages/LoginPage.jsx";
 import PostEditor from "./pages/PostEditor.jsx";
 import LogoutPage from "./pages/LogoutPage.jsx";
 import {getAPI, getTokenProps} from "./util.js";
+import TagsPage from "./pages/TagsPage.jsx";
 
 function App() {
 
@@ -26,7 +27,6 @@ function App() {
         async function refreshTokenIfNeeded() {
 
             const extractedToken = getTokenProps(auth.token);
-            console.dir(extractedToken)
             if (extractedToken.exp > Math.floor(Date() / 1000)) {
                 const headers = {};
                 if (auth.token) {
@@ -42,6 +42,9 @@ function App() {
                 const obj = await req.json()
                 if (req.status === 200) {
                     processLogin({token: obj.token})
+                } else {
+                    // Token is invalid at this point, yeet
+                    processLogin(null)
                 }
             }
         }
@@ -74,6 +77,7 @@ function App() {
                         <Route path={"/"} index={true} element={<HomePage/>}/>
                         <Route path={"/post/:id"} element={<BlogPage/>}/>
                         <Route path={"/create"} element={<PostEditor/>}/>
+                        <Route path={"/tags"} element={<TagsPage/>}/>
 
                         <Route path={"/login"} element={<LoginPage setAuth={processLogin}/>}/>
                         <Route path={"/logout"} element={<LogoutPage setAuth={processLogin}/>}/>
