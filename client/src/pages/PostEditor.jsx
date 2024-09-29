@@ -2,7 +2,7 @@ import {useContext, useEffect, useState} from "react";
 import {getAPI} from "../util.js";
 import {AuthContext} from "../contexts/AuthorisationContext.js";
 
-export default function CreatePostPage() {
+export default function PostEditor() {
     const [postForm, setPostForm] = useState({title: "", publish: false, post: "", tags: [], rawTags: ""});
     const [tags, setTags] = useState(null);
     const auth = useContext(AuthContext);

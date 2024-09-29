@@ -253,6 +253,7 @@ app.get("/posts/:id", (req, res) => {
                         published_at: sourcePost.published_at,
                         post: sourcePost.post,
                         username: sourcePost.username,
+                        tags: sourcePost.tags,
                     }
                 }
 

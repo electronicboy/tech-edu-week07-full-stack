@@ -6,6 +6,7 @@ import {AuthContext} from "../contexts/AuthorisationContext.js";
 export default function HomePage() {
     const [blogPosts, setBlogPosts] = useState([])
     const [tags, setTags] = useState([])
+    const [knownTags, setKnownTags] = useState()
     const [errorMessage, setErrorMessage] = useState()
     const auth = useContext(AuthContext);
 
@@ -33,7 +34,16 @@ export default function HomePage() {
 
     }, [])
 
-    console.log(blogPosts, tags)
+    useEffect(() => {
+        fetch(getAPI() + `/tags`, {}).then(res => {
+            if (res.status === 200) {
+                res.json().then(tags => {
+                    setKnownTags(tags)
+                })
+            }
+        })
+    },[])
+
     return (
         <>
             {
@@ -41,7 +51,7 @@ export default function HomePage() {
             }
             {
                 blogPosts && blogPosts.map(post => {
-                    return (<BlogPost key={post.id} {...post} knownTags={tags} preview={true}/>)
+                    return (<BlogPost key={post.id} {...post} knownTags={knownTags} preview={true}/>)
                 })
             }
 

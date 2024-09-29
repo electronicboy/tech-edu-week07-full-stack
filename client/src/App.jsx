@@ -6,7 +6,7 @@ import {Route, Routes} from "react-router-dom";
 import HomePage from "./pages/HomePage.jsx";
 import BlogPage from "./pages/BlogPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
-import CreatePostPage from "./pages/CreatePostPage.jsx";
+import PostEditor from "./pages/PostEditor.jsx";
 import LogoutPage from "./pages/LogoutPage.jsx";
 
 function App() {
@@ -41,7 +41,7 @@ function App() {
                     <Routes>
                         <Route path={"/"} index={true} element={<HomePage/>}/>
                         <Route path={"/post/:id"} element={<BlogPage />} />
-                        <Route path={"/create"} element={<CreatePostPage />}/>
+                        <Route path={"/create"} element={<PostEditor />}/>
 
                         <Route path={"/login"} element={<LoginPage setAuth={processLogin} />} />
                         <Route path={"/logout"} element={<LogoutPage setAuth={processLogin} />} />

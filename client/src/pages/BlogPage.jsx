@@ -10,9 +10,9 @@ export default function BlogPage() {
     const {id} = useParams()
     const [post, setPost] = useState()
     const [comments, setComments] = useState();
-    const [postsError, setPostsError] = useState();
-    const [commentsError, setCommentsError] = useState()
-    console.log(postsError, commentsError)
+    const [fetchError, setFetchError] = useState();
+    const [knownTags, setKnownTags] = useState();
+
 
     useEffect(() => {
         const headers = {}
@@ -30,7 +30,7 @@ export default function BlogPage() {
                     setPost(comments)
                     return true;
                 } else {
-                    setPostsError(comments.error)
+                    setFetchError(comments.error)
                     return false;
                 }
             })
@@ -52,16 +52,26 @@ export default function BlogPage() {
                 if (res.status === 200) {
                     setComments(comments)
                 } else {
-                    setCommentsError(comments.error)
+                    setFetchError(comments.error)
                 }
             })
         })
     }, [])
 
+    useEffect(() => {
+        fetch(getAPI() + `/tags`, {}).then(res => {
+            if (res.status === 200) {
+                res.json().then(tags => {
+                    setKnownTags(tags)
+                })
+            }
+        })
+    },[])
 
 
     return (<>
-        {post && <BlogPost  {...post}/>}
-        <Comments comments={comments} id={id} />
+        {fetchError && <div><h3>{fetchError}</h3></div>}
+        {post && <BlogPost  {...post} knownTags={knownTags} />}
+        {post && <Comments comments={comments} id={id} />}
     </>)
 }

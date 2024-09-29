@@ -19,21 +19,25 @@ export default function BlogPost({id, title, published_at, post, username, previ
         return tags.map(tag => {
             const found = knownTags.find((test) => test.id === tag);
             if (found) {
-                return (<div>{found.name}</div>)
+                return (<div key={tag.id}>{found.name}</div>)
             } else {
                 return (<></>)
             }
         })
     }
+
     console.log(tags, knownTags)
 
 
     return (<div className="blog-post" onClick={(e) => onBlogPostClick(e)}>
-        <h2>{title}</h2> {!preview && knownTags && tags && populateTags()}
+        <div className={"blog-post-header"}>
+            <h2>{title}</h2> {!preview && knownTags && tags && populateTags()}
+        </div>
         {/* <Link to={"/users/" +username} onClick={e => e.stopPropagation()}>{username}</Link> */}
-        <span className={"blog-post-byline"}>Published by <span className={"blog-post-author"}>{username}</span> @ {formatDate(new Date(published_at))}</span>
+        <span className={"blog-post-byline"}>Published by <span
+            className={"blog-post-author"}>{username}</span> @ {formatDate(new Date(published_at))}</span>
         <br/>
-        <p>{post}</p>
+        <span style={{whiteSpace: "pre-wrap"}}>{post}</span>
     </div>)
 }
 
