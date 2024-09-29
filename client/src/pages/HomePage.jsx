@@ -5,7 +5,7 @@ import {AuthContext} from "../contexts/AuthorisationContext.js";
 import {useSearchParams} from "react-router-dom";
 
 export default function HomePage() {
-    const [blogPosts, setBlogPosts] = useState([])
+    const [blogPosts, setBlogPosts] = useState()
     const [tags, setTags] = useState([])
     const [knownTags, setKnownTags] = useState()
     const [errorMessage, setErrorMessage] = useState()
@@ -29,7 +29,9 @@ export default function HomePage() {
             }
         }).then((res) => {
             if (res.status === 200) {
-                res.json().then((posts) => {setBlogPosts(posts)});
+                res.json().then((posts) => {
+                    console.log(posts);
+                    setBlogPosts(posts)});
             } else {
                 res.json().then((error) => {setErrorMessage(error.message)});
             }
@@ -58,9 +60,11 @@ export default function HomePage() {
             }
             {/*{blogPosts && <button onClick={() => toggleSortMode()}>Toggle Sort Mode</button>}*/}
             {
-                blogPosts && blogPosts.map(post => {
-                    return (<BlogPost key={post.id} {...post} knownTags={knownTags} preview={true}/>)
-                })
+                blogPosts != null ?
+                    (blogPosts.length !== 0 ?
+                        blogPosts.map(post => {return (<BlogPost key={post.id} {...post} knownTags={knownTags} preview={true}/>)})
+                            : <div>Looks like you found the existence of nothing</div>)
+                    : <></>
             }
 
         </>
