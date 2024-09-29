@@ -2,7 +2,7 @@ import {useContext, useState} from "react";
 import {getAPI} from "../../util.js";
 import {AuthContext} from "../../contexts/AuthorisationContext.js";
 
-export default function CommentForm({id}) {
+export default function CommentForm({id, refreshComments}) {
     const [commentForm, setCommentForm] = useState({comment: ""});
     const auth = useContext(AuthContext);
 
@@ -26,7 +26,7 @@ export default function CommentForm({id}) {
             body: JSON.stringify(commentForm),
         }).then(res => {
             if (res.status === 200) {
-                location.reload();
+                refreshComments()
             }
         }).catch((err) => {
             console.log(err)

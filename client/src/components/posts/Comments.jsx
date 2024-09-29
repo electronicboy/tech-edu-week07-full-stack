@@ -68,7 +68,7 @@ export default function Comments({id, comments, refreshComments}) {
 
     return (
         <div className="comments">
-            <CommentForm id={id} />
+            <CommentForm id={id} refreshComments={refreshComments} />
             {processCommments()}
         </div>
     )
