@@ -10,7 +10,7 @@ import {checkAuthHeader, validate} from "./utils.js";
 import {getDatabaseString, getJWTToken} from "./config.js";
 
 const logger = winston.createLogger({
-    level: 'debug',
+    level: 'all',
     format: winston.format.json(),
     transports: [
         new winston.transports.Console({
@@ -65,7 +65,7 @@ app.post("/auth/register", (req, res) => {
     bcrypt.hash(req.body.password, 10, (err, hash) => {
         if (err) {
             res.status(500).json({error: "An internal error occurred"})
-            console.log(err)
+            logger.error(err)
             return;
         }
 
@@ -74,7 +74,8 @@ app.post("/auth/register", (req, res) => {
                 let user = result.rows[0];
                 res.status(200).json({
                     message: "success!", token: jwt.sign({
-                        id: user.id, username: user.username, admin: user.admin, creator: user.creator
+                        id: user.id, username: user.username, admin: user.admin, creator: user.creator,
+                        iat: Math.floor(Date() / 1000), exp: Number(Math.floor(new Date().getTime() / 1000 + (60 * 60 /*1 hour*/)))
                     }, getJWTToken())
                 })
                 return;
@@ -89,6 +90,36 @@ app.post("/auth/register", (req, res) => {
             logger.error(err);
             res.status(500).json({error: "An internal error occurred"})
         })
+    })
+})
+
+app.post("/auth/refresh", (req, res) => {
+    checkAuthHeader(req.headers).then(user => {
+
+        pool.query("SELECT id, username, password, admin, creator FROM blog_users WHERE id = $1", [user.userID]).then((result) => {
+            console.log(result);
+            if (result.rowCount === 0) {
+                return null;
+            } else {
+                return result.rows[0]
+            }
+        }).then(lookup => {
+            if (lookup) {
+                res.status(200).json({
+                    message: "success!", token: jwt.sign({
+                        id: lookup.id, username: lookup.username, admin: lookup.admin, creator: lookup.creator,
+                        iat: Math.floor(Date() / 1000), exp: Number(Math.floor(new Date().getTime() / 1000 + (60 * 60 /*1 hour*/)))
+                    }, getJWTToken())
+                })
+            }
+        }).catch((err) => {
+            res.status(403).json({error: "Failed to refresh token"})
+            console.log("aaa", err)
+            logger.error(err);
+        })
+    }).catch((err) => {
+        logger.error(err);
+        res.status(500).json({error: "An internal error occurred"})
     })
 })
 
@@ -109,7 +140,8 @@ app.post("/auth/login", (req, res) => {
                 if (result) {
                     res.status(200).json({
                         message: "success!", token: jwt.sign({
-                            id: user.id, username: user.username, admin: user.admin, creator: user.creator
+                            id: user.id, username: user.username, admin: user.admin, creator: user.creator,
+                            iat: Number(Math.floor(Date() / 1000)), exp: Number(Math.floor(new Date().getTime() / 1000 + (60 * 60 /*1 hour*/)))
                         }, getJWTToken())
                     })
                 } else {

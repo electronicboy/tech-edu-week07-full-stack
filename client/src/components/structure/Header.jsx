@@ -9,9 +9,7 @@ export default function Header() {
     const auth = useContext(AuthContext);
     const hasToken = auth != null && auth.token;
     const tokenData = hasToken && getTokenProps(auth.token)
-    console.log(tokenData)
     const canCreatePosts = tokenData && (tokenData.admin || tokenData.creator)
-    console.log("auth", auth)
 
     return (<header>
         <span>Cat&apos;s Bloggo</span>

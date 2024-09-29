@@ -19,26 +19,26 @@ export default function BlogPost({id, title, published_at, post, username, previ
         return tags.map(tag => {
             const found = knownTags.find((test) => test.id === tag);
             if (found) {
-                return (<div key={tag.id}>{found.name}</div>)
+                return (<span  key={tag.id} className={"blog-post-tag"}>{found.name}</span>)
             } else {
                 return (<></>)
             }
         })
     }
 
-    console.log(tags, knownTags)
-
-
-    return (<div className="blog-post" onClick={(e) => onBlogPostClick(e)}>
-        <div className={"blog-post-header"}>
-            <h2>{title}</h2> {!preview && knownTags && tags && populateTags()}
-        </div>
-        {/* <Link to={"/users/" +username} onClick={e => e.stopPropagation()}>{username}</Link> */}
-        <span className={"blog-post-byline"}>Published by <span
-            className={"blog-post-author"}>{username}</span> @ {formatDate(new Date(published_at))}</span>
-        <br/>
-        <span style={{whiteSpace: "pre-wrap"}}>{post}</span>
-    </div>)
+    // https://www.reddit.com/r/css/comments/11ekwhy/fading_the_content_at_the_bottom_of_div_element/
+    return (
+        <div className={"blog-post " + (preview ? "blog-post-preview" : "blog-post-full")}
+             onClick={(e) => onBlogPostClick(e)}>
+            <div className={"blog-post-header"}>
+                <h2 style={{display: "inline"}}>{title}</h2> {!preview && knownTags && tags && populateTags()}
+            </div>
+            {/* <Link to={"/users/" +username} onClick={e => e.stopPropagation()}>{username}</Link> */}
+            <span className={"blog-post-byline"}>Published by <span
+                className={"blog-post-author"}>{username}</span> @ {formatDate(new Date(published_at))}</span>
+            <br/>
+            <span style={{whiteSpace: "pre-wrap"}}>{post}</span>
+        </div>)
 }
 
 BlogPost.propTypes = {
@@ -47,5 +47,9 @@ BlogPost.propTypes = {
     published_at: PropTypes.string,
     post: PropTypes.string.isRequired,
     username: PropTypes.string.isRequired,
-    preview: PropTypes.bool
+    preview: PropTypes.bool,
+    knownTags: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        name: PropTypes.string.isRequired,
+    }))
 }

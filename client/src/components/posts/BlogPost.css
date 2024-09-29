@@ -5,3 +5,18 @@
 .blog-post-byline {
     color: var(--text-color-secondary);
 }
+
+.blog-post-tag {
+    background-color: var(--background-color-secondary);
+    padding: 0.1rem;
+    margin: 0.5rem;
+}
+
+.blog-post-preview {
+    mask-image: linear-gradient(180deg,#000 60%,transparent);
+    max-height: 10rem;
+}
+
+.blog-post-full {
+
+}

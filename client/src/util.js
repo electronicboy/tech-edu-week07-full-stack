@@ -1,6 +1,6 @@
 import * as jose from 'jose'
 export function getAPI() {
-    return "http://localhost:8081"
+    return location.href.includes("localhost") ? "http://localhost:8081" : "/onrender"
 }
 
 /**
@@ -29,7 +29,6 @@ export function objectPropsAsString(object) {
 }
 
 export function getTokenProps(token) {
-    console.log(token);
     if (token == null) return null;
     const decoded = jose.decodeJwt(token);
 

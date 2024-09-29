@@ -1,6 +1,6 @@
 import './App.css'
 import Header from "./components/structure/Header.jsx";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {AuthContext} from "./contexts/AuthorisationContext.js";
 import {Route, Routes} from "react-router-dom";
 import HomePage from "./pages/HomePage.jsx";
@@ -8,6 +8,7 @@ import BlogPage from "./pages/BlogPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import PostEditor from "./pages/PostEditor.jsx";
 import LogoutPage from "./pages/LogoutPage.jsx";
+import {getAPI, getTokenProps} from "./util.js";
 
 function App() {
 
@@ -16,7 +17,38 @@ function App() {
         if (item != null) {
             return JSON.parse(item)
         }
+        return null;
     });
+
+    useEffect(() => {
+        if (auth === null) return;
+
+        async function refreshTokenIfNeeded() {
+
+            const extractedToken = getTokenProps(auth.token);
+            console.dir(extractedToken)
+            if (extractedToken.exp > Math.floor(Date() / 1000)) {
+                const headers = {};
+                if (auth.token) {
+                    headers["Authorization"] = `Bearer ${auth.token}`;
+                }
+                const req = await fetch(getAPI() + "/auth/refresh", {
+                    method: "POST",
+                    headers: {
+                        ...headers,
+                        "Accept": "application/json"
+                    }
+                })
+                const obj = await req.json()
+                if (req.status === 200) {
+                    processLogin({token: obj.token})
+                }
+            }
+        }
+
+        refreshTokenIfNeeded();
+
+    }, [auth])
 
     /**
      *
@@ -40,11 +72,11 @@ function App() {
                 <div className="body-container">
                     <Routes>
                         <Route path={"/"} index={true} element={<HomePage/>}/>
-                        <Route path={"/post/:id"} element={<BlogPage />} />
-                        <Route path={"/create"} element={<PostEditor />}/>
+                        <Route path={"/post/:id"} element={<BlogPage/>}/>
+                        <Route path={"/create"} element={<PostEditor/>}/>
 
-                        <Route path={"/login"} element={<LoginPage setAuth={processLogin} />} />
-                        <Route path={"/logout"} element={<LogoutPage setAuth={processLogin} />} />
+                        <Route path={"/login"} element={<LoginPage setAuth={processLogin}/>}/>
+                        <Route path={"/logout"} element={<LogoutPage setAuth={processLogin}/>}/>
 
 
                     </Routes>

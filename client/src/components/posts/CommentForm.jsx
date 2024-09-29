@@ -13,7 +13,6 @@ export default function CommentForm({id}) {
     function handleSubmission(e) {
         e.preventDefault();
         const headers = {};
-        console.log(auth)
         if (auth) {
             headers["Authorization"] = `Bearer ${auth.token}`;
         }
@@ -29,8 +28,6 @@ export default function CommentForm({id}) {
             if (res.status === 200) {
                 location.reload();
             }
-            console.log(res.status)
-            console.log(res)
         }).catch((err) => {
             console.log(err)
         })

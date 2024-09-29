@@ -62,10 +62,12 @@ export function checkAuthHeader(headers) {
 export function extractJWT(token, secret) {
     if (token == null) return null;
     try {
-        if (jwt.verify(token, secret) === false) {
+        console.log("aa", token)
+        if (jwt.verify(token, secret, {clockTolerance: 60 * 30 /* 30 mins*/}) === false) {
             return null;
         }
     } catch (err) {
+        console.log(err);
         return null;
     }
 
