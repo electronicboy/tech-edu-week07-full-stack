@@ -2,7 +2,7 @@ import {useEffect, useState} from "react";
 import {getAPI} from "../util.js";
 
 export default function TagsPage() {
-    const [tags, setTags] = useState();
+    const [tags, setTags] = useState([]);
 
     useEffect(() => {
         fetch(getAPI() + "/tags", {}).then(res => res.json()).then(data => setTags(data));
