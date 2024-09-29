@@ -28,7 +28,7 @@ function App() {
 
             const extractedToken = getTokenProps(auth.token);
             console.log(extractedToken.exp);
-            if (extractedToken.exp > Math.floor(new Date() / 1000)) {
+            if (extractedToken.exp < Math.floor(new Date() / 1000)) {
                 const headers = {};
                 if (auth.token) {
                     headers["Authorization"] = `Bearer ${auth.token}`;
