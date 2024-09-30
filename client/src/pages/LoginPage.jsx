@@ -40,7 +40,7 @@ export default function LoginPage({setAuth}) {
         }).then(res => {
             processAuthResponse(res)
         }).catch((error) => {
-            console.log("aaaa", error)
+            setLastError(error.message)
         })
     }
 

@@ -247,8 +247,7 @@ app.get("/posts", (req, res) => {
                 res.status(200).json(posts);
             }
         }).catch((err) => {
-            logger.e()
-            console.log(err)
+            logger.error(err)
             res.status(500).json({error: "An internal error occurred"});
         })
     }).catch((err) => {
@@ -288,7 +287,6 @@ app.get("/posts/:id", (req, res) => {
 
                 let sourcePost = results.rows[0];
                 let post = {}
-                console.log(sourcePost);
                 if (!admin) {
                     post = {...sourcePost}
                 } else {
@@ -316,18 +314,17 @@ app.get("/posts/:id", (req, res) => {
                 res.status(200).json(posts);
             }
         }).catch((err) => {
-            console.log(err)
+            logger.error(err)
             res.status(500).json({error: "An internal error occurred"});
         })
     }).catch((err) => {
-        console.log(err)
+        logger.error(err)
     })
 
 })
 
 app.post("/posts", (req, res) => {
     const {title, post, publish, tags, extraTags} = req.body;
-    console.log(req.body)
     if (!title) {
         res.status(400).json({error: "Missing title"});
         return;
@@ -371,9 +368,7 @@ app.post("/posts", (req, res) => {
 
                         for (let i = 0; i < tags.length; i++) {
                             const tag = tags[i];
-                            await connection.query(/* language=PostgreSQL */ "INSERT INTO blog_posts_tags (blog_post, blog_tag) VALUES ($1, $2) RETURNING (blog_post, blog_tag)", [id, tag]).then(result => {
-                                console.log(result)
-                            })
+                            await connection.query(/* language=PostgreSQL */ "INSERT INTO blog_posts_tags (blog_post, blog_tag) VALUES ($1, $2) RETURNING (blog_post, blog_tag)", [id, tag])
                         }
                     }
 
@@ -383,7 +378,7 @@ app.post("/posts", (req, res) => {
                 }).then((_) => {
                     res.status(200).json({message: "success", id: newPostId})
                 }).catch((err) => {
-                    console.log(err)
+                    logger.error(err)
                     res.status(500).json({error: "An internal error occurred"})
                     return connection.query("ROLLBACK TRANSACTION");
                 }).then(_ => {
@@ -643,5 +638,5 @@ app.get("/tags", (req, res) => {
 
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port http://0.0.0.0:${PORT}`);
+    logger.info(`Server is running on port http://0.0.0.0:${PORT}`);
 })

@@ -41,13 +41,11 @@ export default function PostEditor() {
             if (res.status === 200) {
                 res.json().then((post) => {
                     navigation(`/post/${post.id}`)
-                    console.log(post);
 
                 })
             } else {
                 res.json().then((error) => {
                     alert(error.error)
-                    console.log(res.status, error.error)
                 })
             }
         })
@@ -56,7 +54,6 @@ export default function PostEditor() {
 
     function handleFormChange(e) {
         let value;
-        console.log("handleFormChange", e.target.type);
         if (e.target.type === "checkbox") {
             value = e.target.checked;
         } else if (e.target.type === "select-multiple") {
@@ -97,9 +94,7 @@ export default function PostEditor() {
     function removeTag(removal) {
         let ret = [];
         if (postForm.tags.includes(removal.id)) {
-            console.log("in", postForm.tags);
             ret = postForm.tags.filter(tag => tag !== removal.id);
-            console.log("out", ret);
         }
 
         setPostForm({...postForm, tags: ret});
@@ -140,10 +135,6 @@ export default function PostEditor() {
             </div>
         )
     }
-
-    console.log("selected", postForm.tags)
-    console.log("tagsUnused", getUnusedTags())
-    console.log("tagsUsed", getSelectedTags())
 
     return (
         <>

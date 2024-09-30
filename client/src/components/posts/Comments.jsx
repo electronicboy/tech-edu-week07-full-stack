@@ -11,8 +11,6 @@ export default function Comments({id, comments, refreshComments}) {
     console.log(comments);
 
     function canDelete(comment) {
-        console.dir(auth)
-        console.dir(comment)
         if (auth) {
             let tokenProps = getTokenProps(auth.token);
             console.dir(tokenProps)
